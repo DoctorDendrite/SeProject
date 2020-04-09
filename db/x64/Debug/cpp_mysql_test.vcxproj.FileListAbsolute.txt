@@ -1,0 +1,6 @@
+C:\dev\__PRIORITY\cpp_mysql_test\x64\Debug\cpp_mysql_test.exe
+C:\dev\__PRIORITY\cpp_mysql_test\x64\Debug\cpp_mysql_test.pdb
+C:\dev\__PRIORITY\cpp_mysql_test\conn80\x64\Debug\cpp_mysql_test.exe
+C:\dev\__PRIORITY\cpp_mysql_test\conn80\x64\Debug\cpp_mysql_test.pdb
+C:\dev\__PRIORITY\cpp_mysql_test\conn80_noboost\x64\Debug\cpp_mysql_test.exe
+C:\dev\__PRIORITY\cpp_mysql_test\conn80_noboost\x64\Debug\cpp_mysql_test.pdb
