@@ -1,1 +1,33 @@
-﻿  Top Down attempt 1.vcxproj -> C:\dev\__PRIORITY\SeProject\Debug\Top Down attempt 1.exe
+﻿  Game.cpp
+C:\dev\__PRIORITY\SeProject\game\Top Down attempt 1\Game.cpp(172,92): warning C4244: 'argument': conversion from 'T' to 'float', possible loss of data
+          with
+          [
+              T=int
+          ]
+C:\dev\__PRIORITY\SeProject\game\Top Down attempt 1\Game.cpp(172,58): warning C4244: 'argument': conversion from 'T' to 'float', possible loss of data
+          with
+          [
+              T=int
+          ]
+C:\dev\__PRIORITY\SeProject\game\Top Down attempt 1\Game.cpp(327,67): warning C4244: 'argument': conversion from 'T' to 'T', possible loss of data
+          with
+          [
+              T=unsigned int
+          ]
+          and
+          [
+              T=float
+          ]
+C:\dev\__PRIORITY\SeProject\game\Top Down attempt 1\Game.cpp(327,38): warning C4244: 'argument': conversion from 'T' to 'T', possible loss of data
+          with
+          [
+              T=unsigned int
+          ]
+          and
+          [
+              T=float
+          ]
+  main.cpp
+C:\dev\__PRIORITY\SeProject\game\Top Down attempt 1\main.cpp(17,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+  Generating Code...
+  Top Down attempt 1.vcxproj -> C:\dev\__PRIORITY\SeProject\game\Debug\Top Down attempt 1.exe
