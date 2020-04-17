@@ -49,12 +49,12 @@ void Game::PrepGuns(std::vector<gunStats>& listOfGunStats)
 
 	// enum GUNS { BERETTA, GLOCK, REMINGTON, AA12, M14, AK47, NUM_OF_GUNS };
 
-	listOfGunStats[BERETTA] = { 630.f, 1000.f, true , 10.f };
-	listOfGunStats[GLOCK] = { 1100.f, 950.f, false , 15.f };
+	listOfGunStats[BERETTA] = { 630.f, 1000.f, true, 10.f, false, 1 };
+	listOfGunStats[GLOCK] = { 1100.f, 950.f, false, 15.f, false, 1 };
 	listOfGunStats[REMINGTON] = { 80.f, 1200.f, true, 8.f, true, 7, };
 	listOfGunStats[AA12] = { 300.f, 1000.f, false, 20.f, true, 6, };
-	listOfGunStats[M14] = { 535.f, 2300.f, true, 3.5f };
-	listOfGunStats[AK47] = { 600.f, 2600.f, false, 5.5f, };
+	listOfGunStats[M14] = { 535.f, 2300.f, true, 3.5f, false, 1 };
+	listOfGunStats[AK47] = { 600.f, 2600.f, false, 5.5f, false, 1 };
 
 	/*
 	struct gunStats
@@ -167,42 +167,107 @@ void Game::PollEvent(sf::RenderWindow& window, bool isFullscreen)
 	}
 }
 
+sf::Vector2f GetPlayerCenter(const sf::RectangleShape& player)
+{
+	return sf::Vector2f(player.getPosition().x, player.getPosition().y);
+}
+
+sf::Vector2f GetAimDirection(const sf::RenderWindow& window, const sf::Vector2f playerCenter)
+{
+	auto mousePosWindow = sf::Vector2f(Mouse::getPosition(window));
+	auto aimDir = mousePosWindow - playerCenter;
+	return aimDir / sqrt(pow(aimDir.x, 2) + pow(aimDir.y, 2));
+}
+
+constexpr float __CRTDECL ToDeg(float angleInDeg)
+{
+	return angleInDeg * 180.f / PI;
+}
+
+constexpr float __CRTDECL ToRad(float angleInDeg)
+{
+	return angleInDeg * PI / 180.f;
+}
+
+float __CRTDECL GetRotationAngle(const sf::Vector2f& aimDirection)
+{
+	return ToDeg(atan2f(aimDirection.y, aimDirection.x));
+}
+
+sf::Vector2f NewPlayerVelocity(float speed, float time, bool moveLeft, bool moveRight, bool moveUp, bool moveDown)
+{
+	auto vel = INIT_PLAYER_VELOCITY;
+
+	// Update the current player velocity
+	if (moveLeft)
+		vel.x += -speed * time;
+
+	if (moveRight)
+		vel.x += speed * time;
+
+	if (moveUp)
+		vel.y += -speed * time;
+
+	if (moveDown)
+		vel.y += speed * time;
+
+	return vel;
+}
+
+float GetCurrentFireAngle(float spreadAngleDeg)
+{
+	return rand() % (int(spreadAngleDeg * 100) / 100) - (int(spreadAngleDeg * 50) / 100) - 0.5f;
+}
+
+float GetCurrentFireAngleRad(float spreadAngleDeg)
+{
+	return ToRad(GetCurrentFireAngle(spreadAngleDeg));
+}
+
+sf::Vector2f GetFireRotationVector(const sf::Vector2f& aim, float angle)
+{
+	return sf::Vector2f(aim.x * cosf(angle) - aim.y * sinf(angle), aim.x * sinf(angle) + aim.y * cosf(angle));
+}
+
+bool ObjectOutOfBounds(const sf::RenderWindow& window, const sf::Vector2f& pos, const sf::Vector2f& size)
+{
+	return pos.x < 0 - size.x * 2 || pos.x > window.getSize().x + size.x * 2
+		|| pos.y < 0 - size.y * 2 || pos.y > window.getSize().y + size.y * 2;
+}
+
+bool BulletCollidesWithObject(const Bullet& myBullet, const sf::RectangleShape& object)
+{
+	return myBullet.shape.getGlobalBounds().intersects(object.getGlobalBounds());
+}
+
 void Game::UpdatePlayerAndCursor(const sf::RenderWindow& window)
 {
-	cursorTexture.setPosition(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y);
+	cursorTexture.setPosition(sf::Vector2f(sf::Mouse::getPosition(window)));
 
 	// GAME LOGIC
 	// Update
-	playerCenter = Vector2f(player.getPosition().x, player.getPosition().y);
-	mousePosWindow = Vector2f(Mouse::getPosition(window));
-	aimDir = mousePosWindow - playerCenter;
-	aimDirNorm = aimDir / sqrt(pow(aimDir.x, 2) + pow(aimDir.y, 2));
 
-	player.setRotation(atan2f(aimDirNorm.y, aimDirNorm.x) * 180.f / PI);
+	playerCenter = GetPlayerCenter(player);
+	aimDirNorm = GetAimDirection(window, playerCenter);
+	player.setRotation(GetRotationAngle(aimDirNorm));
 
-	// ~~~ DEBUG
-	//std::cout << aimDirNorm.x << " " << aimDirNorm.y << "\t\tdT = " << deltaTime << std::endl;
+	// // ~~~ DEBUG
+	// std::cout << aimDirNorm.x << " " << aimDirNorm.y << "\t\tdT = " << deltaTime << std::endl;
+
+	bool left = Keyboard::isKeyPressed(myKeyBinds[MOVE_LEFT]);
+	bool right = Keyboard::isKeyPressed(myKeyBinds[MOVE_RIGHT]);
+	bool up = Keyboard::isKeyPressed(myKeyBinds[MOVE_UP]);
+	bool down = Keyboard::isKeyPressed(myKeyBinds[MOVE_DOWN]);
 
 	// Movement
 	// Detect diagonal movements and counteract Pythagorean multiplier if necessary
-	if ((Keyboard::isKeyPressed(myKeyBinds[MOVE_LEFT]) || Keyboard::isKeyPressed(myKeyBinds[MOVE_RIGHT]))
-		&& (Keyboard::isKeyPressed(myKeyBinds[MOVE_UP]) || Keyboard::isKeyPressed(myKeyBinds[MOVE_DOWN])))
-		playerSpeed = currSpeed * sinf(45.f * PI / 180);
+	if ((left || right) && (up || down))
+		playerSpeed = currSpeed * DIAGONAL_COEFF;
 	else
 		playerSpeed = currSpeed;
 
-	// Reset the velocity
-	playerVelocity = Vector2f(0.f, 0.f);
-
-	// Update the current player velocity
-	if (Keyboard::isKeyPressed(myKeyBinds[MOVE_LEFT]))
-		playerVelocity.x += -playerSpeed * deltaTime;
-	if (Keyboard::isKeyPressed(myKeyBinds[MOVE_RIGHT]))
-		playerVelocity.x += playerSpeed * deltaTime;
-	if (Keyboard::isKeyPressed(myKeyBinds[MOVE_UP]))
-		playerVelocity.y += -playerSpeed * deltaTime;
-	if (Keyboard::isKeyPressed(myKeyBinds[MOVE_DOWN]))
-		playerVelocity.y += playerSpeed * deltaTime;
+	// Update the player velocity
+	playerVelocity = NewPlayerVelocity(playerSpeed, deltaTime, left, right, up, down);
 
 	// Move the player to their velocity
 	player.move(playerVelocity);
@@ -223,8 +288,7 @@ void Game::UpdateBullets(const sf::RenderWindow& window)
 		bulletPos = bullets[i].shape.getPosition();
 
 		// If bullet is out of bounds (window)
-		if (bulletPos.x < 0 - aSize.x * 2 || bulletPos.x > window.getSize().x + aSize.x * 2
-			|| bulletPos.y < 0 - aSize.y * 2 || bulletPos.y > window.getSize().y + aSize.y * 2)
+		if (ObjectOutOfBounds(window, bulletPos, aSize))
 		{
 			// Then delete them to free memory
 			bullets.erase(bullets.begin() + i);
@@ -234,7 +298,7 @@ void Game::UpdateBullets(const sf::RenderWindow& window)
 			// Enemy collision
 			for (size_t k = 0; k < enemies.size(); k++)
 			{
-				if (bullets[i].shape.getGlobalBounds().intersects(enemies[k].getGlobalBounds()))
+				if (BulletCollidesWithObject(bullets[i], enemies[k]))
 				{
 					bullets.erase(bullets.begin() + i);
 					enemies.erase(enemies.begin() + k);
@@ -249,20 +313,17 @@ void Game::UpdateBullets(const sf::RenderWindow& window)
 void Game::FireGun()
 {
 	Vector2f currVector;
-	float currAngle, currAngleRad;
+	float currAngleRad;
 
 	// Pick a random spread for the bullet
-	currAngle = rand() % (int(currGunStats.spreadDegrees * 100) / 100) - int(currGunStats.spreadDegrees * 50) / 100 - 0.5f;
-	//printf("currAngle: %f\n", currAngle);
-	currAngleRad = currAngle * PI / 180.f;
+	currAngleRad = GetCurrentFireAngleRad(currGunStats.spreadDegrees);
 
 	// Rotate vector of bullet direction
-	currVector.x = aimDirNorm.x * cosf(currAngleRad) - aimDirNorm.y * sinf(currAngleRad);
-	currVector.y = aimDirNorm.x * sinf(currAngleRad) + aimDirNorm.y * cosf(currAngleRad);
+	currVector = GetFireRotationVector(aimDirNorm, currAngleRad);
 
-	// Initially set the position of hte bullet
+	// Initially set the position of the bullet
 	aBullet.shape.setPosition(playerCenter);
-	aBullet.shape.setRotation(atan2f(currVector.y, currVector.x) * 180.f / PI);
+	aBullet.shape.setRotation(GetRotationAngle(currVector));
 	aBullet.shape.move(aimDirNorm * distMuzzFromChar);
 	aBullet.currVelocity = currVector * currGunStats.muzzVelocity * deltaTime + playerVelocity;
 	bullets.push_back(Bullet(aBullet));
@@ -279,28 +340,31 @@ void Game::FireShotgun()
 
 	float degBetweenPellets = currGunStats.spreadDegrees / (currGunStats.numPellets - 1);
 
-	currAngle = -currGunStats.spreadDegrees / 2.f;
-	currAngleRad = currAngle * PI / 180.f;
-
 	for (size_t currPellet = 0; currPellet < currGunStats.numPellets; currPellet++)
 	{
+		currAngle = -currGunStats.spreadDegrees / 2.f;
+
+		currAngleRad = ToRad(currAngle);
+		currVector = GetFireRotationVector(aimDirNorm, currAngleRad);
+
 		// Rotate vector formula
-		currVector.x = aimDirNorm.x * cosf(currAngleRad) - aimDirNorm.y * sinf(currAngleRad);
-		currVector.y = aimDirNorm.x * sinf(currAngleRad) + aimDirNorm.y * cosf(currAngleRad);
+		auto bulletVelocity = currVector * currGunStats.muzzVelocity * deltaTime + playerVelocity;
 
 		aBullet.shape.setPosition(playerCenter);
-		aBullet.shape.setRotation(atan2f(aimDirNorm.y, aimDirNorm.x) * 180.f / PI);
+		aBullet.shape.setRotation(GetRotationAngle(aimDirNorm));
 		aBullet.shape.move(aimDirNorm * distMuzzFromChar);
-		aBullet.currVelocity = currVector * currGunStats.muzzVelocity * deltaTime + playerVelocity;
+		aBullet.currVelocity = bulletVelocity;
 		bullets.push_back(Bullet(aBullet));
+
+		// currAngle = -currGunStats.spreadDegrees / 2.f;
+		auto temp = (int)(currGunStats.spreadDegrees * 10) / 70;
 
 		// fix later?
 		if (currPellet == currGunStats.numPellets - 1)
 			currAngle = currGunStats.spreadDegrees / 2.f;
 		else
-			currAngle += degBetweenPellets + (rand() % int(currGunStats.spreadDegrees * 10) / 70 - (int)(currGunStats.spreadDegrees * 10 / 70));
+			currAngle += degBetweenPellets + (rand() % temp - temp);
 
-		currAngleRad = currAngle * PI / 180.f;
 		clockRoF.restart().Zero;
 		triggerHeld = true;
 	}	// End for-loop for each shotgun pellet
@@ -313,9 +377,7 @@ void Game::GameSequence(sf::RenderWindow& window, bool isFullscreen)
 	while (window.isOpen())
 	{
 		deltaTime = clockFT.restart().asSeconds();
-
 		PollEvent(window, isFullscreen);
-
 		UpdatePlayerAndCursor(window);
 
 		// Enemy update
@@ -326,7 +388,6 @@ void Game::GameSequence(sf::RenderWindow& window, bool isFullscreen)
 		{
 			enemy.setPosition(Vector2f(rand() % window.getSize().x, rand() % window.getSize().y));
 			enemies.push_back(RectangleShape(enemy));
-
 			spawnCounter = 0;
 		}
 
