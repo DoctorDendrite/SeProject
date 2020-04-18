@@ -9,6 +9,7 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include "cScreen.h"
+#include "Game.h"
 
 const float INIT_X_POS = 280.f;
 const float INIT_Y_POS = 160.f;
@@ -82,9 +83,11 @@ item.setPosition({ xPos, yPos })
 #define SET_MENU_ITEM_DEFAULT(item, displayStr, yPos) \
 SET_MENU_ITEM(item, displayStr, MY_FONT, DEFAULT_POINT, INIT_X_POS, yPos)
 
+#define NEXT_Y_POS(size) INIT_Y_POS + (size - 1) * ITEM_HEIGHT
+
 #define ADD_MENU_ITEM(menu, displayStr) \
 menu.push_back(sf::Text()); \
-SET_MENU_ITEM_DEFAULT(menu.back(), displayStr, INIT_Y_POS + (menu.size() - 1) * ITEM_HEIGHT)
+SET_MENU_ITEM_DEFAULT(menu.back(), displayStr, NEXT_Y_POS(menu.size()))
 
 void IndicateItem(Menu& myMenu, int itemIndex)
 {
@@ -126,6 +129,9 @@ int screen_0::Run(sf::RenderWindow& App)
 	ADD_MENU_ITEM(mainMenu, "Load");
 	ADD_MENU_ITEM(mainMenu, "Save");
 	ADD_MENU_ITEM(mainMenu, "Exit");
+
+	sf::Text label;
+	SET_MENU_ITEM_DEFAULT(label, Game::CollisionsToString(), NEXT_Y_POS(mainMenu.size() + 1));
 
 	if (playing)
 		alpha = alpha_max;
@@ -196,6 +202,7 @@ int screen_0::Run(sf::RenderWindow& App)
 			for (auto item : mainMenu)
 				App.draw(item);
 		
+		App.draw(label);
 		App.display();
 	}
 

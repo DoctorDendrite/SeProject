@@ -42,6 +42,8 @@ gunStats Game::currGunStats;
 std::vector<gunStats> Game::listOfGunStats;
 bool Game::triggerHeld;
 
+int Game::collisions = 0;
+
 void Game::PrepGuns(std::vector<gunStats>& listOfGunStats)
 {
 	listOfGunStats.clear();
@@ -312,6 +314,7 @@ void Game::UpdateBullets(const sf::RenderWindow& window)
 					bullets.erase(bullets.begin() + i);
 					enemies.erase(enemies.begin() + k);
 					//printf("you just hit enemy %i\n", k);
+					collisions = collisions + 1;
 					break;
 				}
 			}
@@ -496,4 +499,19 @@ int Game::GameSequence(sf::RenderWindow& window, bool isFullscreen)
 
 	//Never reaching this point normally, but just in case, exit the application
 	return -1;
+}
+
+int Game::Collisions()
+{
+	return Game::collisions;
+}
+
+void Game::Collisions(int collisions)
+{
+	Game::collisions = collisions;
+}
+
+std::string Game::CollisionsToString()
+{
+	return std::string("Collisions: ") + std::to_string(Game::collisions);
 }

@@ -1,5 +1,5 @@
 ﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(467,5): warning MSB8028: The intermediate directory (Debug\) contains files shared from another project (game.vcxproj).  This can lead to incorrect clean and rebuild behavior.
   Source.cpp
-C:\dev\__PRIORITY\SeProject_001\game\screen_0.h(99,23): warning C4018: '<': signed/unsigned mismatch
-C:\dev\__PRIORITY\SeProject_001\game\screen_0.h(102,16): warning C4018: '<': signed/unsigned mismatch
-  game.vcxproj -> C:\dev\__PRIORITY\SeProject_001\game\Debug\game.exe
+C:\dev\__PRIORITY\SeProject\game\screen_0.h(94,23): warning C4018: '<': signed/unsigned mismatch
+C:\dev\__PRIORITY\SeProject\game\screen_0.h(97,16): warning C4018: '<': signed/unsigned mismatch
+  game.vcxproj -> C:\dev\__PRIORITY\SeProject\game\Debug\game.exe

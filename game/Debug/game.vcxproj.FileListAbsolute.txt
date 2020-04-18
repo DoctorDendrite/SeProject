@@ -6,3 +6,5 @@ C:\dev\SeProject_temp_002\game\Debug\game.exe
 C:\dev\SeProject_temp_002\game\Debug\game.pdb
 C:\dev\__PRIORITY\SeProject_001\game\Debug\game.exe
 C:\dev\__PRIORITY\SeProject_001\game\Debug\game.pdb
+C:\dev\__PRIORITY\SeProject\game\Debug\game.exe
+C:\dev\__PRIORITY\SeProject\game\Debug\game.pdb

@@ -90,6 +90,8 @@ private:
 	static std::vector<gunStats> listOfGunStats;
 	static bool triggerHeld;
 
+	static int collisions;
+
 public:
 	static void PrepGuns(std::vector<gunStats>& listOfGunStats);
 	static void Initialize(const sf::RenderWindow& window);
@@ -100,6 +102,10 @@ public:
 
 	static void FireGun();
 	static void FireShotgun();
+
+	static int Collisions();
+	static void Collisions(int collisions);
+	static std::string CollisionsToString();
 };
 
 sf::Vector2f GetPlayerCenter(const sf::RectangleShape& player);
