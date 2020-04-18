@@ -10,6 +10,14 @@
 #include <iostream>
 #include "cScreen.h"
 
+const float INIT_X_POS = 280.f;
+const float INIT_Y_POS = 160.f;
+const float ITEM_HEIGHT = 60.f;
+const int DEFAULT_POINT = 20;
+const char* FONT_FILE_PATH = "res/verdanab.ttf";
+
+static sf::Font MY_FONT;
+
 class screen_0 : public cScreen
 {
 private:
@@ -28,18 +36,76 @@ screen_0::screen_0(void)
 	playing = false;
 }
 
+enum class MENU_ITEMS
+{
+	PLAY,
+	LOAD,
+	SAVE,
+	EXIT,
+	COUNT
+};
+
+int Prev(int index, int modulus)
+{
+	if (index == 0)
+		return modulus;
+
+	return index - 1;
+}
+
+int Next(int index, int modulus)
+{
+	if (index == modulus)
+		return 0;
+
+	return index + 1;
+}
+
+int PrevItemIndex(int index)
+{
+	return Prev(index, (int)MENU_ITEMS::COUNT - 1);
+}
+
+int NextItemIndex(int index)
+{
+	return Next(index, (int)MENU_ITEMS::COUNT - 1);
+}
+
+typedef std::vector<sf::Text> Menu;
+
+#define SET_MENU_ITEM(item, displayStr, myFont, point, xPos, yPos) \
+item.setFont(myFont); \
+item.setCharacterSize(point); \
+item.setString(displayStr); \
+item.setPosition({ xPos, yPos })
+
+#define SET_MENU_ITEM_DEFAULT(item, displayStr, yPos) \
+SET_MENU_ITEM(item, displayStr, MY_FONT, DEFAULT_POINT, INIT_X_POS, yPos)
+
+#define ADD_MENU_ITEM(menu, displayStr) \
+menu.push_back(sf::Text()); \
+SET_MENU_ITEM_DEFAULT(menu.back(), displayStr, INIT_Y_POS + (menu.size() - 1) * ITEM_HEIGHT)
+
+void IndicateItem(Menu& myMenu, int itemIndex)
+{
+	for (size_t i = 0; i < itemIndex; ++i)
+		myMenu[i].setFillColor(sf::Color(255, 0, 0, 255));
+
+	if (itemIndex < myMenu.size())
+		myMenu[itemIndex].setFillColor(sf::Color(255, 255, 255, 255));
+
+	for (size_t i = itemIndex + 1; i < myMenu.size(); ++i)
+		myMenu[i].setFillColor(sf::Color(255, 0, 0, 255));
+}
+
 int screen_0::Run(sf::RenderWindow& App)
 {
-	sf::Event Event;
-	bool Running = true;
-	sf::Texture Texture;
-	sf::Sprite Sprite;
+	sf::Event event;
+	bool running = true;
+	sf::Texture myTexture;
+	sf::Sprite mySprite;
 	int alpha = 0;
-	sf::Font Font;
-	sf::Text Menu1;
-	sf::Text Menu2;
-	sf::Text Menu3;
-	int menu = 0;
+	Menu mainMenu;
 
 	// if (!Texture.loadFromFile("presentation.png"))
 	// {
@@ -47,71 +113,65 @@ int screen_0::Run(sf::RenderWindow& App)
 	// 	return (-1);
 	// }
 
-	Sprite.setTexture(Texture);
-	Sprite.setColor(sf::Color(255, 255, 255, alpha));
+	mySprite.setTexture(myTexture);
+	mySprite.setColor(sf::Color(255, 255, 255, alpha));
 
-	if (!Font.loadFromFile("res/verdanab.ttf"))
+	if (!MY_FONT.loadFromFile(FONT_FILE_PATH))
 	{
 		std::cerr << "Error loading verdanab.ttf" << std::endl;
 		return (-1);
 	}
 
-	Menu1.setFont(Font);
-	Menu1.setCharacterSize(20);
-	Menu1.setString("Play");
-	Menu1.setPosition({ 280.f, 160.f });
-
-	Menu2.setFont(Font);
-	Menu2.setCharacterSize(20);
-	Menu2.setString("Exit");
-	Menu2.setPosition({ 280.f, 220.f });
-
-	Menu3.setFont(Font);
-	Menu3.setCharacterSize(20);
-	Menu3.setString("Continue");
-	Menu3.setPosition({ 280.f, 160.f });
+	ADD_MENU_ITEM(mainMenu, "Play");
+	ADD_MENU_ITEM(mainMenu, "Load");
+	ADD_MENU_ITEM(mainMenu, "Save");
+	ADD_MENU_ITEM(mainMenu, "Exit");
 
 	if (playing)
-	{
 		alpha = alpha_max;
-	}
 
-	while (Running)
+	int index = 0;
+
+	while (running)
 	{
 		// Verifying events
-		while (App.pollEvent(Event))
+		while (App.pollEvent(event))
 		{
 			// Window closed
-			if (Event.type == sf::Event::Closed)
-			{
+			if (event.type == sf::Event::Closed)
 				return (-1);
-			}
 
 			// Key pressed
-			if (Event.type == sf::Event::KeyPressed)
+			if (event.type == sf::Event::KeyPressed)
 			{
-				switch (Event.key.code)
+				switch (event.key.code)
 				{
 				case sf::Keyboard::Up:
 				case sf::Keyboard::W:
-					menu = 0;
+					index = PrevItemIndex(index);
 					break;
 				case sf::Keyboard::Down:
 				case sf::Keyboard::S:
-					menu = 1;
+					index = NextItemIndex(index);
 					break;
 				case sf::Keyboard::Return:
-					if (menu == 0)
+					switch ((MENU_ITEMS) index)
 					{
-						//Let's get play !
-						playing = true;
+					case MENU_ITEMS::PLAY:
+						// playing = true;
+						mainMenu[(int)MENU_ITEMS::PLAY].setString("Continue");
 						return (1);
-					}
-					else
-					{
-						// Let's get work...
+
+					case MENU_ITEMS::LOAD:
+						break;
+
+					case MENU_ITEMS::SAVE:
+						break;
+
+					case MENU_ITEMS::EXIT:
 						return (-1);
 					}
+
 					break;
 				default:
 					break;
@@ -121,44 +181,20 @@ int screen_0::Run(sf::RenderWindow& App)
 
 		// When getting at alpha_max, we stop modifying the sprite
 		if (alpha < alpha_max)
-		{
 			alpha++;
-		}
 
-		Sprite.setColor(sf::Color(255, 255, 255, alpha / alpha_div));
-
-		if (menu == 0)
-		{
-			Menu1.setFillColor(sf::Color(255, 0, 0, 255));
-			Menu2.setFillColor(sf::Color(255, 255, 255, 255));
-			Menu3.setFillColor(sf::Color(255, 0, 0, 255));
-		}
-		else
-		{
-			Menu1.setFillColor(sf::Color(255, 255, 255, 255));
-			Menu2.setFillColor(sf::Color(255, 0, 0, 255));
-			Menu3.setFillColor(sf::Color(255, 255, 255, 255));
-		}
+		mySprite.setColor(sf::Color(255, 255, 255, alpha / alpha_div));
+		IndicateItem(mainMenu, index);
 
 		// Clearing screen
 		App.clear();
 		
 		// Drawing
-		App.draw(Sprite);
+		App.draw(mySprite);
 		
 		if (alpha == alpha_max)
-		{
-			if (playing)
-			{
-				App.draw(Menu3);
-			}
-			else
-			{
-				App.draw(Menu1);
-			}
-			
-			App.draw(Menu2);
-		}
+			for (auto item : mainMenu)
+				App.draw(item);
 		
 		App.display();
 	}
